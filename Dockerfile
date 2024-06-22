@@ -45,4 +45,4 @@ USER appuser
 COPY . .
 
 # Run the application.
-CMD python3 app.py
+CMD python3 runner.py
