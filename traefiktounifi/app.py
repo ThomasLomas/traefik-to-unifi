@@ -26,9 +26,6 @@ def sync():
     if traefik_api_url is None:
         raise ValueError("TRAEFIK_API_URL environment variable is not set.")
 
-    if ignore_ssl_warnings is None:
-        ignore_ssl_warnings = False
-
     print(f"The value of UNIFI_URL is: {unifi_url}")
     print(f"The value of TRAEFIK_API_URL is: {traefik_api_url}")
 
