@@ -9,6 +9,7 @@ def sync():
     unifi_url = os.environ.get("UNIFI_URL")
     unifi_username = os.environ.get("UNIFI_USERNAME")
     unifi_password = os.environ.get("UNIFI_PASSWORD")
+    ignore_ssl_warnings = os.environ.get("INGNORE_SSL_WARNINGS")
 
     if unifi_url is None:
         raise ValueError("UNIFI_URL environment variable is not set.")
@@ -24,6 +25,9 @@ def sync():
 
     if traefik_api_url is None:
         raise ValueError("TRAEFIK_API_URL environment variable is not set.")
+
+    if ignore_ssl_warnings is None:
+        ignore_ssl_warnings = False
 
     print(f"The value of UNIFI_URL is: {unifi_url}")
     print(f"The value of TRAEFIK_API_URL is: {traefik_api_url}")
@@ -56,6 +60,10 @@ def sync():
         exit(0)
 
     unifi_session = requests.Session()
+
+    if ignore_ssl_warnings:
+        requests.packages.urllib3.disable_warnings()
+        unifi_session.verify = False
 
     unifi_login_response = unifi_session.post(
         f"{unifi_url}api/auth/login",
