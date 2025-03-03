@@ -9,7 +9,7 @@ def sync():
     unifi_url = os.environ.get("UNIFI_URL")
     unifi_username = os.environ.get("UNIFI_USERNAME")
     unifi_password = os.environ.get("UNIFI_PASSWORD")
-    ignore_ssl_warnings = os.environ.get("INGNORE_SSL_WARNINGS")
+    ignore_ssl_warnings = os.environ.get("IGNORE_SSL_WARNINGS")
 
     if unifi_url is None:
         raise ValueError("UNIFI_URL environment variable is not set.")
