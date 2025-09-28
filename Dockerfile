@@ -1,7 +1,7 @@
 ARG PYTHON_VERSION=3.13.0
 
 # The builder image, used to build the virtual environment
-FROM python:${PYTHON_VERSION}-bookworm as builder
+FROM python:${PYTHON_VERSION}-bookworm AS builder
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
@@ -23,7 +23,7 @@ RUN touch README.md
 RUN poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR
 
 # The runtime image, used to just run the code provided its virtual environment
-FROM python:${PYTHON_VERSION}-slim-bookworm as runtime
+FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
