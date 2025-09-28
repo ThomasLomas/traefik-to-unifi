@@ -1,0 +1,7 @@
+services:
+  traefik-to-unifi:
+    build: .
+    container_name: traefik-to-unifi
+    restart: unless-stopped
+    env_file:
+      - .env
