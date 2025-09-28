@@ -107,7 +107,7 @@ def sync():
     is_first_run = False
     traefik_domains_json_last_run = traefik_domains_json
 
-    # Do not sync with unifi if there are no changes in the Traefik hostnames, but for saftey do it every 5th run so that manually modified dns records get fixed too.
+    # Do not sync with unifi if there are no changes in the Traefik hostnames, but for safety do it every 5th run so that manually modified dns records get fixed too.
     if not traefik_domains_json_changed:
 
         if number_of_syncs_without_change < 5:
