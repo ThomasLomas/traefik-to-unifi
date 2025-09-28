@@ -90,7 +90,7 @@ def sync():
 
     # Detect changes compared to previous run
     traefik_domains_json = json.dumps(traefik_domains, indent=4)
-    traefik_domains_json_changed = traefik_domains_json != traefik_domains_json_last_run;
+    traefik_domains_json_changed = traefik_domains_json != traefik_domains_json_last_run
 
     if traefik_domains_json_changed:
         number_of_syncs_without_change = 0
