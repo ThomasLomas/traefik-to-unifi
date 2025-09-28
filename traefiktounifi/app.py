@@ -166,7 +166,7 @@ def sync():
                 already_exists = True
                 if entry[1] != traefik_ip:
                     logging.info(
-                        f"DNS name {dns_name} already exists but with different value {entry[1]}. Schedule update to {traefik_ip}."
+                        f"DNS name {dns_name} already exists but with different value {entry[1]}. Scheduling update to {traefik_ip}."
                     )
                     entries_to_update.append((entry[0], entry[2]))
                 break
