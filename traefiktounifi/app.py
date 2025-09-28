@@ -172,7 +172,7 @@ def sync():
                 break
 
         if not already_exists:
-            logging.info(f"Schedule adding DNS name {dns_name} to Unifi static DNS entries.")
+            logging.info(f"Scheduling addition of DNS name {dns_name} to Unifi static DNS entries.")
             hosts_to_add.append(dns_name)
 
     logging.info(
