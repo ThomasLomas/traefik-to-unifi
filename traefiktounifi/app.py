@@ -44,7 +44,7 @@ def sync():
         if value is None:
             raise ValueError(f"Required environment variable {key} is not set.")
 
-    # Validate optional environment variables    
+    # Validate optional environment variables
     if dns_record_type not in ("A", "CNAME"):
         raise ValueError(f"Invalid DNS_RECORD_TYPE: {dns_record_type}. Allowed values are 'A' or 'CNAME'.")
 
