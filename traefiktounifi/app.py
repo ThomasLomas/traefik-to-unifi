@@ -53,7 +53,7 @@ def sync():
         logging.debug(f"TRAEFIK_API_URL={traefik_api_url}")
 
         if ignore_ssl_warnings:
-            # we show our own warning on startup, no warning on each request requried
+            # we show our own warning on startup, no warning on each request required
             requests.packages.urllib3.disable_warnings()
             logging.warning(
                 f"IGNORE_SSL_WARNINGS={ignore_ssl_warnings} - "
