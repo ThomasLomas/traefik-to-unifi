@@ -81,7 +81,7 @@ docker run -e TRAEFIK_API_URL=http://traefik:8080/api/ \
            traefik-to-unifi
 ```
 
-### 4. Running with Docker Compose
+### 3. Running with Docker Compose
 
 Build the image and start the service:
 
