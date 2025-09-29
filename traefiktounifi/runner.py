@@ -1,9 +1,11 @@
-from traefiktounifi import app
 import schedule
 import time
 
-app.sync()
-schedule.every(1).minutes.do(app.sync)
+from traefiktounifi import app
+
+traefikToUnifi = app.TraefikToUnifi()
+traefikToUnifi.sync()
+schedule.every(1).minutes.do(traefikToUnifi.sync)
 
 # Keep the script running indefinitely
 while True:
