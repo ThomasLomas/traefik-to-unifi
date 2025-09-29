@@ -6,6 +6,7 @@ import os
 import re
 
 import requests
+import urllib3
 
 
 class TraefikToUnifi:
@@ -38,9 +39,9 @@ class TraefikToUnifi:
 
         if self.ignore_ssl_warnings:
             # we show our own warning on startup, no warning on each request required
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             logging.warning(
-                "Ignoring SSL warnings as per configuration. This is insecure and should only be used for testing purposes."
-                "Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings"
+                "Ignoring SSL warnings as per configuration. This is insecure and should only be used for testing purposes. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings"
             )
 
         # Validate required environment variables
@@ -112,7 +113,7 @@ class TraefikToUnifi:
         self.is_first_run = False
         self.traefik_domains_json_last_run = traefik_domains_json
 
-        # Do not sync with unifi if there are no changes in the Traefik hostnames, but for safety do it every 5th run so that manually modified dns records get fixed too.
+        # Do not sync with Unifi if there are no changes in the Traefik hostnames, but for safety do it every 5th run so that manually modified dns records get fixed too.
         if not traefik_domains_json_changed:
             if self.number_of_syncs_without_change < self.full_sync_interval:
                 logging.info("Skipping Unifi update due to no changes.")
