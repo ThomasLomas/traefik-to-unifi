@@ -46,17 +46,7 @@ docker run -e TRAEFIK_API_URL=http://traefik:8080/api/ \
            thomaslomas/traefik-to-unifi:latest
 ```
 
-### 2. Running using Poetry (for development)
-
-Make sure all required environment variables (listed above) are set.
-
-```bash
-poetry install
-poetry shell
-python traefiktounifi/runner.py
-```
-
-### 3. Running with Docker (without docker-compose)
+### 2. Running with Docker (without docker-compose)
 
 #### 1. Build the Docker image:
 
@@ -102,9 +92,61 @@ docker compose up
 
 Make sure your `.env` file is next to `docker-compose.yml` so that secrets are loaded automatically.
 
+## Development
+
+This project uses Poetry for dependency management and includes automated code quality checks.
+
+### Setup Development Environment
+
+1. Install dependencies and set up pre-commit hooks:
+   ```bash
+   make dev-setup
+   ```
+
+### Code Quality
+
+This project uses several tools to maintain code quality:
+
+- **Ruff** - Fast Python linter and formatter
+- **Black** - Code formatter
+- **Pre-commit** - Git hooks for automatic checks
+
+#### Available Commands
+
+```bash
+# Check code style and formatting
+make lint
+
+# Auto-fix formatting issues
+make format
+
+# Run all CI checks locally
+make ci
+
+# Run pre-commit hooks on all files
+make pre-commit
+```
+
+#### GitHub Actions
+
+All pull requests automatically run a single CI workflow that includes:
+
+- Code linting with Ruff
+- Format checking with Black and Ruff
+- Pre-commit hook validation
+- Security scanning with Trivy
+
+The CI will fail if code doesn't meet the formatting and linting standards.
+
 ## Contributing
 
 Contributions are welcome! Please follow the guidelines outlined in [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+Before submitting a pull request:
+
+1. Run `make ci` to ensure your changes pass all checks
+2. Make sure your code is properly formatted with `make format`
+3. Add tests for new functionality
 
 ## License
 

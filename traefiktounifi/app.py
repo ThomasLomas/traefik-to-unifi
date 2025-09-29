@@ -1,10 +1,12 @@
 """Module for synchronizing Traefik hostnames with Unifi static DNS entries."""
 
-import os
-import requests
-import re
 import json
 import logging
+import os
+import re
+
+import requests
+
 
 class TraefikToUnifi:
     """Synchronizes Traefik hostnames with Unifi static DNS entries."""
@@ -25,15 +27,21 @@ class TraefikToUnifi:
         self.unifi_password = os.environ.get("UNIFI_PASSWORD")
 
         # Load optional environment variables with defaults
-        self.ignore_ssl_warnings = os.environ.get("IGNORE_SSL_WARNINGS", "false") in ("1", "true", "True", "TRUE")
+        self.ignore_ssl_warnings = os.environ.get("IGNORE_SSL_WARNINGS", "false") in (
+            "1",
+            "true",
+            "True",
+            "TRUE",
+        )
         self.dns_record_type = os.environ.get("DNS_RECORD_TYPE", "A")
         self.full_sync_interval = int(os.environ.get("FULL_SYNC_INTERVAL", "5"))
 
         if self.ignore_ssl_warnings:
             # we show our own warning on startup, no warning on each request required
             logging.warning(
-                f"Ignoring SSL warnings as per configuration. This is insecure and should only be used for testing purposes."
-                "Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings")
+                "Ignoring SSL warnings as per configuration. This is insecure and should only be used for testing purposes."
+                "Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings"
+            )
 
         # Validate required environment variables
         for key, value in {
@@ -48,10 +56,14 @@ class TraefikToUnifi:
 
         # Validate optional environment variables
         if self.dns_record_type not in ("A", "CNAME"):
-            raise ValueError(f"Invalid DNS_RECORD_TYPE: {self.dns_record_type}. Allowed values are 'A' or 'CNAME'.")
+            raise ValueError(
+                f"Invalid DNS_RECORD_TYPE: {self.dns_record_type}. Allowed values are 'A' or 'CNAME'."
+            )
 
         if self.full_sync_interval < 2:
-            raise ValueError(f"Invalid FULL_SYNC_INTERVAL: {self.full_sync_interval}. Must be 2 or greater.")
+            raise ValueError(
+                f"Invalid FULL_SYNC_INTERVAL: {self.full_sync_interval}. Must be 2 or greater."
+            )
 
         logging.debug(f"UNIFI_URL={self.unifi_url}")
         logging.debug(f"TRAEFIK_API_URL={self.traefik_api_url}")
@@ -69,7 +81,7 @@ class TraefikToUnifi:
         logging.info("Starting synchronization...")
 
         # Request routers from Traefik API
-        traefik_domains = self.fetchTraefikDomains()
+        traefik_domains = self.fetch_traefik_domains()
 
         if not traefik_domains:
             logging.warning("No hostnames found in Traefik routers.")
@@ -77,14 +89,20 @@ class TraefikToUnifi:
 
         # Detect changes compared to previous run
         traefik_domains_json = json.dumps(traefik_domains, indent=4)
-        traefik_domains_json_changed = traefik_domains_json != self.traefik_domains_json_last_run
+        traefik_domains_json_changed = (
+            traefik_domains_json != self.traefik_domains_json_last_run
+        )
 
         if traefik_domains_json_changed:
             self.number_of_syncs_without_change = 0
             if self.is_first_run:
-                logging.debug(f"Extracted {len(traefik_domains)} hostnames in Traefik routers in first run.")
+                logging.debug(
+                    f"Extracted {len(traefik_domains)} hostnames in Traefik routers in first run."
+                )
             else:
-                logging.debug(f"Extracted {len(traefik_domains)} hostnames in Traefik routers and detected changes since last run.")
+                logging.debug(
+                    f"Extracted {len(traefik_domains)} hostnames in Traefik routers and detected changes since last run."
+                )
         else:
             self.number_of_syncs_without_change += 1
             logging.info(
@@ -101,7 +119,9 @@ class TraefikToUnifi:
                 return
 
             # reset counter and do full sync
-            logging.info("Performing full sync with Unifi despite no changes in Traefik hostnames.")
+            logging.info(
+                "Performing full sync with Unifi despite no changes in Traefik hostnames."
+            )
             self.number_of_syncs_without_change = 0
 
         # Login to Unifi
@@ -158,7 +178,9 @@ class TraefikToUnifi:
                     break
 
             if not already_exists:
-                logging.info(f"Scheduling addition of DNS name {dns_name} to Unifi static DNS entries.")
+                logging.info(
+                    f"Scheduling addition of DNS name {dns_name} to Unifi static DNS entries."
+                )
                 hosts_to_add.append(dns_name)
 
         logging.info(
@@ -169,8 +191,9 @@ class TraefikToUnifi:
         if not entries_to_update and not hosts_to_add:
             logging.debug("No changes required for Unifi static DNS entries.")
         else:
-            logging.info(f"Updating DNS entries using DNS record type: {self.dns_record_type}")
-
+            logging.info(
+                f"Updating DNS entries using DNS record type: {self.dns_record_type}"
+            )
 
         # Update existing entries
         for key, entry_id in entries_to_update:
@@ -213,7 +236,7 @@ class TraefikToUnifi:
 
         logging.info("Synchronization completed.")
 
-    def fetchTraefikDomains(self):
+    def fetch_traefik_domains(self):
         """Fetches and returns hostnames from Traefik routers."""
 
         logging.debug("Extracting hostnames from Traefik...")
@@ -223,7 +246,9 @@ class TraefikToUnifi:
         if self.ignore_ssl_warnings:
             traefik_session.verify = False
 
-        traefik_routers_response = traefik_session.get(f"{self.traefik_api_url}http/routers")
+        traefik_routers_response = traefik_session.get(
+            f"{self.traefik_api_url}http/routers"
+        )
 
         if traefik_routers_response.status_code != 200:
             raise ValueError(

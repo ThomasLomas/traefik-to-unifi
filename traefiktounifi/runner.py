@@ -1,11 +1,14 @@
-import schedule
 import time
+
+import schedule
 
 from traefiktounifi import app
 
-traefikToUnifi = app.TraefikToUnifi()
-traefikToUnifi.sync()
-schedule.every(1).minutes.do(traefikToUnifi.sync)
+traefik_to_unifi = app.TraefikToUnifi()
+traefik_to_unifi.sync()
+
+# Schedule the sync function to run every minute
+schedule.every(1).minutes.do(traefik_to_unifi.sync)
 
 # Keep the script running indefinitely
 while True:
