@@ -32,7 +32,7 @@ This project aims to integrate Traefik with UniFi, allowing for routes populated
 You can pull the latest image from Docker Hub:
 
 ```bash
-docker pull thomaslomas/traefik-to-unifi:latest
+docker pull ghcr.io/thomaslomas/traefik-to-unifi:latest
 ```
 
 Then run the container with the required environment variables:
@@ -43,7 +43,7 @@ docker run -e TRAEFIK_API_URL=http://traefik:8080/api/ \
            -e UNIFI_URL=https://unifi:8443/ \
            -e UNIFI_USERNAME=admin \
            -e UNIFI_PASSWORD=supersecret \
-           thomaslomas/traefik-to-unifi:latest
+           ghcr.io/thomaslomas/traefik-to-unifi:latest
 ```
 
 ### 2. Running with Docker (without docker-compose)
