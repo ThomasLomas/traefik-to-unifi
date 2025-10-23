@@ -26,6 +26,7 @@ class TraefikToUnifi:
         self.unifi_url = os.environ.get("UNIFI_URL")
         self.unifi_username = os.environ.get("UNIFI_USERNAME")
         self.unifi_password = os.environ.get("UNIFI_PASSWORD")
+        self.unifi_api_key = os.environ.get("UNIFI_API_KEY")
 
         # Load optional environment variables with defaults
         self.ignore_ssl_warnings = os.environ.get("IGNORE_SSL_WARNINGS", "false") in (
@@ -49,11 +50,15 @@ class TraefikToUnifi:
             "UNIFI_URL": self.unifi_url,
             "UNIFI_USERNAME": self.unifi_username,
             "UNIFI_PASSWORD": self.unifi_password,
+            "UNIFI_API_KEY": self.unifi_api_key,
             "TRAEFIK_IP": self.traefik_ip,
             "TRAEFIK_API_URL": self.traefik_api_url,
         }.items():
             if value is None:
                 raise ValueError(f"Required environment variable {key} is not set.")
+
+        if not self.unifi_password and not self.unifi_api_key:
+            raise ValueError("Either UNIFI_PASSWORD or UNIFI_API_KEY should be set.")
 
         # Validate optional environment variables
         if self.dns_record_type not in ("A", "CNAME"):
@@ -130,21 +135,24 @@ class TraefikToUnifi:
         if self.ignore_ssl_warnings:
             unifi_session.verify = False
 
-        logging.debug(f"Logging in to Unifi {self.unifi_url} ...")
-        unifi_login_response = unifi_session.post(
-            f"{self.unifi_url}api/auth/login",
-            json={"username": self.unifi_username, "password": self.unifi_password},
-        )
-
-        if unifi_login_response.status_code != 200:
-            raise ValueError(
-                f"Failed to login to Unifi API. Status code: {unifi_login_response.status_code}"
+        if self.unifi_api_key is None:
+            logging.debug(f"Logging in to Unifi {self.unifi_url} ...")
+            unifi_login_response = unifi_session.post(
+                f"{self.unifi_url}api/auth/login",
+                json={"username": self.unifi_username, "password": self.unifi_password},
             )
 
-        logging.debug("Login successful, updating CSRF token.")
-        unifi_session.headers.update(
-            {"X-Csrf-Token": unifi_login_response.headers["X-Csrf-Token"]}
-        )
+            if unifi_login_response.status_code != 200:
+                raise ValueError(
+                    f"Failed to login to Unifi API. Status code: {unifi_login_response.status_code}"
+                )
+
+            logging.debug("Login successful, updating CSRF token.")
+            unifi_session.headers.update(
+                {"X-Csrf-Token": unifi_login_response.headers["X-Csrf-Token"]}
+            )
+        else:
+            unifi_session.headers.update({"X-API-KEY": self.unifi_api_key})
 
         # Fetch existing static DNS entries from Unifi
         logging.debug("Fetching existing static DNS entries from Unifi...")
