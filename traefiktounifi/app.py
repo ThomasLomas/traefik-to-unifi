@@ -49,8 +49,6 @@ class TraefikToUnifi:
         for key, value in {
             "UNIFI_URL": self.unifi_url,
             "UNIFI_USERNAME": self.unifi_username,
-            "UNIFI_PASSWORD": self.unifi_password,
-            "UNIFI_API_KEY": self.unifi_api_key,
             "TRAEFIK_IP": self.traefik_ip,
             "TRAEFIK_API_URL": self.traefik_api_url,
         }.items():
