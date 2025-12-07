@@ -54,6 +54,48 @@ jobs:
       - name: Run pre-commit hooks
         run: poetry run pre-commit run --all-files --show-diff-on-failure
 
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: poetry-${{ runner.os }}-3.12-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-3.12-
+
+      - name: Install dependencies
+        run: poetry install --with dev --no-interaction --no-ansi
+
+      - name: Run unit tests
+        run: poetry run pytest --cov=traefiktounifi --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+        continue-on-error: true
+
   security:
     runs-on: ubuntu-latest
     steps:
