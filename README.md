@@ -15,7 +15,7 @@ This project aims to integrate Traefik with UniFi, allowing for routes populated
 - `UNIFI_URL`: The URL of the UniFi controller
 - `UNIFI_USERNAME`: The username for accessing the UniFi controller
 - `UNIFI_PASSWORD`: The password for accessing the UniFi controller
-- `UNIFI_API_KEY`: The api key for accessing the Unifi controller
+- `UNIFI_API_KEY`: The api key for accessing the UniFi controller
 - `TRAEFIK_API_URL`: The URL of the Traefik reverse proxy API
 - `TRAEFIK_IP`: For A records this should be the IP of the Traefik reverse proxy API. For CNAME records this should be the hostname resolving to the IP.
 
