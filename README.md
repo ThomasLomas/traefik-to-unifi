@@ -112,6 +112,7 @@ This project uses several tools to maintain code quality:
 - **Ruff** - Fast Python linter and formatter
 - **Black** - Code formatter
 - **Pre-commit** - Git hooks for automatic checks
+- **Pytest** - Testing framework with coverage reporting
 
 #### Available Commands
 
@@ -122,23 +123,49 @@ make lint
 # Auto-fix formatting issues
 make format
 
-# Run all CI checks locally
+# Run tests
+make test
+
+# Run tests with coverage report
+make test-cov
+
+# Run all CI checks locally (lint + tests)
 make ci
 
 # Run pre-commit hooks on all files
 make pre-commit
 ```
 
+#### Testing
+
+This project includes comprehensive unit and integration tests:
+
+- **Unit tests**: Test individual components in isolation with mocked dependencies
+- **Integration tests**: Test end-to-end workflows with realistic scenarios
+- **Coverage**: Maintained at ~89% code coverage
+
+Run tests with:
+```bash
+make test
+```
+
+View coverage report:
+```bash
+make test-cov
+# Open htmlcov/index.html in a browser
+```
+
 #### GitHub Actions
 
-All pull requests automatically run a single CI workflow that includes:
+All pull requests automatically run a CI workflow that includes:
 
 - Code linting with Ruff
 - Format checking with Black and Ruff
 - Pre-commit hook validation
+- **Unit and integration tests with coverage reporting**
 - Security scanning with Trivy
 
-The CI will fail if code doesn't meet the formatting and linting standards.
+The CI will fail if code doesn't meet the formatting, linting, or testing standards.
 
 ## Contributing
 

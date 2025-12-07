@@ -16,6 +16,9 @@ schedule = "^1.2.2"
 ruff = "^0.13.2"
 black = "^25.9.0"
 pre-commit = "^4.3.0"
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
+responses = "^0.25.0"
 
 [tool.ruff]
 line-length = 88
@@ -88,6 +91,31 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = [
+    "-v",
+    "--cov=traefiktounifi",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+
+[tool.coverage.run]
+source = ["traefiktounifi"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
 
 [build-system]
 requires = ["poetry-core"]
