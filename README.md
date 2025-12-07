@@ -1,9 +1,8 @@
-# Traefik to Unifi
+# Traefik to UniFi
 
 ## Description
 
-This project aims to integrate Traefik with UniFi, allowing for routes populated in Traefik to be updated in the static DNS of Unifi.
-
+This project aims to integrate Traefik with UniFi, allowing for routes populated in Traefik to be updated in the static DNS of UniFi.
 ## Installation
 
 1. Clone the repository: `git clone https://github.com/ThomasLomas/traefik-to-unifi.git`
@@ -12,7 +11,8 @@ This project aims to integrate Traefik with UniFi, allowing for routes populated
 
 ### Required Environment Variables:
 
-Either `UNIFI_PASSWORD` or `UNIFI_API_KEY` should be used.
+> Either `UNIFI_USERNAME` and `UNIFI_PASSWORD` or `UNIFI_API_KEY` should be used.
+
 - `UNIFI_URL`: The URL of the UniFi controller
 - `UNIFI_USERNAME`: The username for accessing the UniFi controller
 - `UNIFI_PASSWORD`: The password for accessing the UniFi controller

@@ -48,15 +48,18 @@ class TraefikToUnifi:
         # Validate required environment variables
         for key, value in {
             "UNIFI_URL": self.unifi_url,
-            "UNIFI_USERNAME": self.unifi_username,
             "TRAEFIK_IP": self.traefik_ip,
             "TRAEFIK_API_URL": self.traefik_api_url,
         }.items():
             if value is None:
                 raise ValueError(f"Required environment variable {key} is not set.")
 
-        if not self.unifi_password and not self.unifi_api_key:
-            raise ValueError("Either UNIFI_PASSWORD or UNIFI_API_KEY should be set.")
+        if (
+            not self.unifi_username or not self.unifi_password
+        ) and not self.unifi_api_key:
+            raise ValueError(
+                "Either UNIFI_USERNAME and UNIFI_PASSWORD or UNIFI_API_KEY should be set."
+            )
 
         # Validate optional environment variables
         if self.dns_record_type not in ("A", "CNAME"):
@@ -110,31 +113,31 @@ class TraefikToUnifi:
         else:
             self.number_of_syncs_without_change += 1
             logging.info(
-                f"No changes since last sync ({self.number_of_syncs_without_change} time(s) since last full sync)."
+                f"No changes since last sync - {self.number_of_syncs_without_change} time(s) since last full sync."
             )
 
         self.is_first_run = False
         self.traefik_domains_json_last_run = traefik_domains_json
 
-        # Do not sync with Unifi if there are no changes in the Traefik hostnames, but for safety do it every 5th run so that manually modified dns records get fixed too.
+        # Do not sync with UniFi if there are no changes in the Traefik hostnames, but for safety do it every 5th run so that manually modified dns records get fixed too.
         if not traefik_domains_json_changed:
             if self.number_of_syncs_without_change < self.full_sync_interval:
-                logging.info("Skipping Unifi update due to no changes.")
+                logging.info("Skipping UniFi update due to no changes.")
                 return
 
             # reset counter and do full sync
             logging.info(
-                "Performing full sync with Unifi despite no changes in Traefik hostnames."
+                "Performing full sync with UniFi despite no changes in Traefik hostnames."
             )
             self.number_of_syncs_without_change = 0
 
-        # Login to Unifi
+        # Login to UniFi
         unifi_session = requests.Session()
         if self.ignore_ssl_warnings:
             unifi_session.verify = False
 
         if self.unifi_api_key is None:
-            logging.debug(f"Logging in to Unifi {self.unifi_url} ...")
+            logging.debug(f"Logging in to UniFi {self.unifi_url} ...")
             unifi_login_response = unifi_session.post(
                 f"{self.unifi_url}api/auth/login",
                 json={"username": self.unifi_username, "password": self.unifi_password},
@@ -142,7 +145,7 @@ class TraefikToUnifi:
 
             if unifi_login_response.status_code != 200:
                 raise ValueError(
-                    f"Failed to login to Unifi API. Status code: {unifi_login_response.status_code}"
+                    f"Failed to login to UniFi API. Status code: {unifi_login_response.status_code}"
                 )
 
             logging.debug("Login successful, updating CSRF token.")
@@ -150,17 +153,18 @@ class TraefikToUnifi:
                 {"X-Csrf-Token": unifi_login_response.headers["X-Csrf-Token"]}
             )
         else:
+            logging.debug("Using UniFi API Key for authentication.")
             unifi_session.headers.update({"X-API-KEY": self.unifi_api_key})
 
-        # Fetch existing static DNS entries from Unifi
-        logging.debug("Fetching existing static DNS entries from Unifi...")
+        # Fetch existing static DNS entries from UniFi
+        logging.debug("Fetching existing static DNS entries from UniFi...")
         get_static_dns_entries_response = unifi_session.get(
             f"{self.unifi_url}proxy/network/v2/api/site/default/static-dns"
         )
 
         if get_static_dns_entries_response.status_code != 200:
             raise ValueError(
-                f"Failed to get static DNS entries from Unifi API. Status code: {get_static_dns_entries_response.status_code}"
+                f"Failed to get static DNS entries from UniFi API. Status code: {get_static_dns_entries_response.status_code}"
             )
 
         unifi_static_dns_entries = [
@@ -171,7 +175,7 @@ class TraefikToUnifi:
         entries_to_update = []
         hosts_to_add = []
 
-        # Compare Traefik hostnames with Unifi static DNS entries
+        # Compare Traefik hostnames with UniFi static DNS entries
         for dns_name in traefik_domains:
             already_exists = False
             for entry in unifi_static_dns_entries:
@@ -186,7 +190,7 @@ class TraefikToUnifi:
 
             if not already_exists:
                 logging.info(
-                    f"Scheduling addition of DNS name {dns_name} to Unifi static DNS entries."
+                    f"Scheduling addition of DNS name {dns_name} to UniFi static DNS entries."
                 )
                 hosts_to_add.append(dns_name)
 
@@ -196,7 +200,7 @@ class TraefikToUnifi:
         )
 
         if not entries_to_update and not hosts_to_add:
-            logging.debug("No changes required for Unifi static DNS entries.")
+            logging.debug("No changes required for UniFi static DNS entries.")
         else:
             logging.info(
                 f"Updating DNS entries using DNS record type: {self.dns_record_type}"
@@ -219,7 +223,7 @@ class TraefikToUnifi:
                 logging.info(f"Successfully updated DNS entry {key} in Unifi API.")
             else:
                 logging.error(
-                    f"Failed to update static DNS entry {key} in Unifi API. Status code: {update_static_dns_entry_response.status_code}"
+                    f"Failed to update static DNS entry {key} in UniFi API. Status code: {update_static_dns_entry_response.status_code}"
                 )
 
         # Add new entries
@@ -235,10 +239,10 @@ class TraefikToUnifi:
             )
 
             if add_static_dns_entry_response.status_code == 200:
-                logging.info(f"Successfully added DNS entry {host} in Unifi API.")
+                logging.info(f"Successfully added DNS entry {host} in UniFi API.")
             else:
                 logging.error(
-                    f"Failed to add static DNS entry {host} in Unifi API. Status code: {add_static_dns_entry_response.status_code}"
+                    f"Failed to add static DNS entry {host} in UniFi API. Status code: {add_static_dns_entry_response.status_code}"
                 )
 
         logging.info("Synchronization completed.")
