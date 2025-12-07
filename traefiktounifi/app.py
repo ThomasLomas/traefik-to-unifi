@@ -136,7 +136,7 @@ class TraefikToUnifi:
         if self.ignore_ssl_warnings:
             unifi_session.verify = False
 
-        if self.unifi_api_key is None:
+        if not self.unifi_api_key:
             logging.debug(f"Logging in to UniFi {self.unifi_url} ...")
             unifi_login_response = unifi_session.post(
                 f"{self.unifi_url}api/auth/login",
