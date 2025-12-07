@@ -11,7 +11,8 @@ This project aims to integrate Traefik with UniFi, allowing for routes populated
 3. Set up the necessary environment variables:
 
 ### Required Environment Variables:
-`Either UNIFI_PASSWORD or UNIFI_API_KEY should be used`
+
+Either `UNIFI_PASSWORD` or `UNIFI_API_KEY` should be used.
 - `UNIFI_URL`: The URL of the UniFi controller
 - `UNIFI_USERNAME`: The username for accessing the UniFi controller
 - `UNIFI_PASSWORD`: The password for accessing the UniFi controller
