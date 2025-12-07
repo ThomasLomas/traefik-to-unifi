@@ -1,7 +1,6 @@
 """Unit tests for the app module (TraefikToUnifi class)."""
 
-import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import responses
@@ -116,7 +115,8 @@ class TestTraefikToUnifiInit:
         monkeypatch.setenv("TRAEFIK_API_URL", "http://traefik.example.com/api/")
 
         with pytest.raises(
-            ValueError, match="Either UNIFI_USERNAME and UNIFI_PASSWORD or UNIFI_API_KEY"
+            ValueError,
+            match="Either UNIFI_USERNAME and UNIFI_PASSWORD or UNIFI_API_KEY",
         ):
             TraefikToUnifi()
 
