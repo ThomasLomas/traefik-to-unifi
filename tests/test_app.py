@@ -76,8 +76,9 @@ class TestTraefikToUnifiInit:
         monkeypatch.setenv("TRAEFIK_API_URL", "http://traefik.example.com/api/")
         monkeypatch.setenv("IGNORE_SSL_WARNINGS", "true")
 
-        with patch("traefiktounifi.app.urllib3.disable_warnings"):
+        with patch("traefiktounifi.app.urllib3.disable_warnings") as mock_disable:
             app = TraefikToUnifi()
+            mock_disable.assert_called_once()
 
         assert app.ignore_ssl_warnings is True
 
