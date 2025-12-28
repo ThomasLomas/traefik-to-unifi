@@ -347,13 +347,13 @@ class TraefikToUnifi:
             return
 
         try:
-            from datetime import datetime, timezone
+            from datetime import UTC, datetime
 
             # Deduplicate hostnames (multiple routers can have same hostname)
             unique_hostnames = list(dict.fromkeys(hostnames))
 
             output_data = {
-                "last_updated": datetime.now(timezone.utc).isoformat(),
+                "last_updated": datetime.now(UTC).isoformat(),
                 "traefik_ip": self.traefik_ip,
                 "dns_record_type": self.dns_record_type,
                 "total_entries": len(unique_hostnames),

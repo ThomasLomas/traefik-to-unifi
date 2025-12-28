@@ -11,14 +11,39 @@ This project aims to integrate Traefik with UniFi, allowing for routes populated
 
 ### Required Environment Variables:
 
-> Either `UNIFI_USERNAME` and `UNIFI_PASSWORD` or `UNIFI_API_KEY` should be used.
+**Always required:**
+- `UNIFI_URL`: The URL of the UniFi controller (e.g., `https://192.168.1.1/`)
+- `TRAEFIK_API_URL`: The URL of the Traefik reverse proxy API (e.g., `http://traefik:8080/api/`)
+- `TRAEFIK_IP`: For A records, the IP of Traefik. For CNAME records, the hostname resolving to the IP.
 
-- `UNIFI_URL`: The URL of the UniFi controller
-- `UNIFI_USERNAME`: The username for accessing the UniFi controller
-- `UNIFI_PASSWORD`: The password for accessing the UniFi controller
-- `UNIFI_API_KEY`: The api key for accessing the UniFi controller
-- `TRAEFIK_API_URL`: The URL of the Traefik reverse proxy API
-- `TRAEFIK_IP`: For A records this should be the IP of the Traefik reverse proxy API. For CNAME records this should be the hostname resolving to the IP.
+**Authentication (choose one):**
+
+| Method | Variables | Notes |
+|--------|-----------|-------|
+| API Key (recommended) | `UNIFI_API_KEY` | More secure, no password rotation issues |
+| Username/Password | `UNIFI_USERNAME` + `UNIFI_PASSWORD` | Legacy method, requires local admin account |
+
+### Generating a UniFi API Key
+
+API key authentication is recommended over username/password. Follow these steps to generate one:
+
+1. **Access the UniFi Network Application**
+   - Log in to your UniFi Network application via the web interface
+   - Or access through your Official UniFi Hosting account (unifi.ui.com)
+
+2. **Navigate to the Integrations Section**
+   - Go to **Network** → **Settings** → **System** → **Integrations**
+   - Or access directly via: `https://<your-controller>/network/default/settings/system/integrations`
+
+3. **Generate the API Key**
+   - In the Integrations section, find the option to generate API keys
+   - Click **Create API Key** or **Generate**
+   - Give it a descriptive name (e.g., "traefik-to-unifi")
+
+4. **Save the API Key**
+   - **Important:** Copy and securely save the API key immediately
+   - The key will not be displayed again after you close the dialog
+   - Store it in your `.env` file or secrets manager
 
 ### Optional Environment Variables (with defaults):
 
