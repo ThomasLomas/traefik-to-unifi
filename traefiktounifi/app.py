@@ -45,6 +45,9 @@ class TraefikToUnifi:
         self.docker_filter_value = os.environ.get("DOCKER_FILTER_VALUE")
         self.docker_client = None
 
+        # JSON output file for tracking synced DNS entries
+        self.output_file = os.environ.get("DNS_OUTPUT_FILE")
+
         if self.docker_filter_label:
             logging.info(
                 f"Docker label filtering enabled: {self.docker_filter_label}={self.docker_filter_value or '*'}"
@@ -329,6 +332,49 @@ class TraefikToUnifi:
                 )
 
         logging.info("Synchronization completed.")
+
+        # Write current DNS entries to JSON file if configured
+        self.write_dns_entries_to_file(traefik_domains)
+
+    def write_dns_entries_to_file(self, hostnames):
+        """
+        Writes the current DNS entries to a JSON file for tracking.
+
+        Args:
+            hostnames: List of hostnames that are synced to UniFi.
+        """
+        if not self.output_file:
+            return
+
+        try:
+            from datetime import datetime, timezone
+
+            output_data = {
+                "last_updated": datetime.now(timezone.utc).isoformat(),
+                "traefik_ip": self.traefik_ip,
+                "dns_record_type": self.dns_record_type,
+                "total_entries": len(hostnames),
+                "entries": sorted(
+                    [
+                        {
+                            "hostname": hostname,
+                            "target": self.traefik_ip,
+                            "type": self.dns_record_type,
+                        }
+                        for hostname in hostnames
+                    ],
+                    key=lambda x: x["hostname"],
+                ),
+            }
+
+            with open(self.output_file, "w") as f:
+                json.dump(output_data, f, indent=2)
+
+            logging.info(
+                f"Wrote {len(hostnames)} DNS entries to {self.output_file}"
+            )
+        except Exception as e:
+            logging.error(f"Failed to write DNS entries to file: {e}")
 
     def fetch_traefik_domains(self, allowed_hostnames=None):
         """

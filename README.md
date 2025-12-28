@@ -26,6 +26,51 @@ This project aims to integrate Traefik with UniFi, allowing for routes populated
 - `LOG_LEVEL`: Either CRITICAL, ERROR, WARNING, INFO, DEBUG. Defaults to INFO.
 - `FULL_SYNC_INTERVAL`: Trigger a full sync every N runs. Defaults to 5.
 - `IGNORE_SSL_WARNINGS`: Set to "true" to ignore SSL warnings. Defaults to "false".
+- `DNS_OUTPUT_FILE`: Path to write a JSON file tracking all synced DNS entries. If not set, no file is written.
+
+### DNS Output File (Optional):
+
+When `DNS_OUTPUT_FILE` is set, the application writes a JSON file after each sync containing all current DNS entries. This is useful for:
+
+- Auditing which routes are synced to UniFi
+- Integration with monitoring or documentation tools
+- Debugging DNS sync issues
+
+Example output (`/data/dns-entries.json`):
+
+```json
+{
+  "last_updated": "2025-12-28T21:45:00.000000+00:00",
+  "traefik_ip": "10.0.10.50",
+  "dns_record_type": "A",
+  "total_entries": 3,
+  "entries": [
+    {
+      "hostname": "grafana.example.com",
+      "target": "10.0.10.50",
+      "type": "A"
+    },
+    {
+      "hostname": "lidarr.example.com",
+      "target": "10.0.10.50",
+      "type": "A"
+    },
+    {
+      "hostname": "sonarr.example.com",
+      "target": "10.0.10.50",
+      "type": "A"
+    }
+  ]
+}
+```
+
+**Note:** Make sure to mount a volume for persistence:
+```yaml
+volumes:
+  - /path/to/data:/data
+environment:
+  - DNS_OUTPUT_FILE=/data/dns-entries.json
+```
 
 ### Docker Label Filtering (Optional):
 
