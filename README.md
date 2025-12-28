@@ -11,14 +11,39 @@ This project aims to integrate Traefik with UniFi, allowing for routes populated
 
 ### Required Environment Variables:
 
-> Either `UNIFI_USERNAME` and `UNIFI_PASSWORD` or `UNIFI_API_KEY` should be used.
+**Always required:**
+- `UNIFI_URL`: The URL of the UniFi controller (e.g., `https://192.168.1.1/`)
+- `TRAEFIK_API_URL`: The URL of the Traefik reverse proxy API (e.g., `http://traefik:8080/api/`)
+- `TRAEFIK_IP`: For A records, the IP of Traefik. For CNAME records, the hostname resolving to the IP.
 
-- `UNIFI_URL`: The URL of the UniFi controller
-- `UNIFI_USERNAME`: The username for accessing the UniFi controller
-- `UNIFI_PASSWORD`: The password for accessing the UniFi controller
-- `UNIFI_API_KEY`: The api key for accessing the UniFi controller
-- `TRAEFIK_API_URL`: The URL of the Traefik reverse proxy API
-- `TRAEFIK_IP`: For A records this should be the IP of the Traefik reverse proxy API. For CNAME records this should be the hostname resolving to the IP.
+**Authentication (choose one):**
+
+| Method | Variables | Notes |
+|--------|-----------|-------|
+| API Key (recommended) | `UNIFI_API_KEY` | More secure, no password rotation issues |
+| Username/Password | `UNIFI_USERNAME` + `UNIFI_PASSWORD` | Legacy method, requires local admin account |
+
+### Generating a UniFi API Key
+
+API key authentication is recommended over username/password. Follow these steps to generate one:
+
+1. **Access the UniFi Network Application**
+   - Log in to your UniFi Network application via the web interface
+   - Or access through your Official UniFi Hosting account (unifi.ui.com)
+
+2. **Navigate to the Integrations Section**
+   - Go to **Network** → **Settings** → **System** → **Integrations**
+   - Or access directly via: `https://<your-controller>/network/default/settings/system/integrations`
+
+3. **Generate the API Key**
+   - In the Integrations section, find the option to generate API keys
+   - Click **Create API Key** or **Generate**
+   - Give it a descriptive name (e.g., "traefik-to-unifi")
+
+4. **Save the API Key**
+   - **Important:** Copy and securely save the API key immediately
+   - The key will not be displayed again after you close the dialog
+   - Store it in your `.env` file or secrets manager
 
 ### Optional Environment Variables (with defaults):
 
@@ -26,6 +51,88 @@ This project aims to integrate Traefik with UniFi, allowing for routes populated
 - `LOG_LEVEL`: Either CRITICAL, ERROR, WARNING, INFO, DEBUG. Defaults to INFO.
 - `FULL_SYNC_INTERVAL`: Trigger a full sync every N runs. Defaults to 5.
 - `IGNORE_SSL_WARNINGS`: Set to "true" to ignore SSL warnings. Defaults to "false".
+- `DNS_OUTPUT_FILE`: Path to write a JSON file tracking all synced DNS entries. If not set, no file is written.
+
+### DNS Output File (Optional):
+
+When `DNS_OUTPUT_FILE` is set, the application writes a JSON file after each sync containing all current DNS entries. This is useful for:
+
+- Auditing which routes are synced to UniFi
+- Integration with monitoring or documentation tools
+- Debugging DNS sync issues
+
+Example output (`/data/dns-entries.json`):
+
+```json
+{
+  "last_updated": "2025-12-28T21:45:00.000000+00:00",
+  "traefik_ip": "10.0.10.50",
+  "dns_record_type": "A",
+  "total_entries": 3,
+  "entries": [
+    {
+      "hostname": "grafana.example.com",
+      "target": "10.0.10.50",
+      "type": "A"
+    },
+    {
+      "hostname": "lidarr.example.com",
+      "target": "10.0.10.50",
+      "type": "A"
+    },
+    {
+      "hostname": "sonarr.example.com",
+      "target": "10.0.10.50",
+      "type": "A"
+    }
+  ]
+}
+```
+
+**Note:** Make sure to mount a volume for persistence:
+```yaml
+volumes:
+  - /path/to/data:/data
+environment:
+  - DNS_OUTPUT_FILE=/data/dns-entries.json
+```
+
+### Docker Label Filtering (Optional):
+
+Filter which containers get DNS entries by checking Docker container labels. This is useful when you only want certain containers to have UniFi DNS records (similar to how [cloudflare-companion](https://github.com/tiredofit/docker-traefik-cloudflare-companion) works).
+
+- `DOCKER_FILTER_LABEL`: The Docker label name to check (e.g., `traefik.unifi-dns`).
+- `DOCKER_FILTER_VALUE`: The required label value (e.g., `true`). If not set, any value is accepted.
+
+**Note:** When using Docker label filtering, you must mount the Docker socket:
+```yaml
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock
+```
+
+#### Example: Only create DNS for containers with `traefik.unifi-dns=true`
+
+Container labels:
+```yaml
+# This container WILL get UniFi DNS
+labels:
+  - traefik.enable=true
+  - traefik.http.routers.myapp.rule=Host(`myapp.example.com`)
+  - traefik.unifi-dns=true  # ← This label triggers UniFi DNS creation
+
+# This container will NOT get UniFi DNS (no traefik.unifi-dns label)
+labels:
+  - traefik.enable=true
+  - traefik.http.routers.public.rule=Host(`public.example.com`)
+  - traefik.constraint=proxy-public  # ← Only for Cloudflare, not UniFi
+```
+
+traefik-to-unifi configuration:
+```yaml
+environment:
+  - DOCKER_FILTER_LABEL=traefik.unifi-dns
+  - DOCKER_FILTER_VALUE=true
+```
 
 ## Usage
 
