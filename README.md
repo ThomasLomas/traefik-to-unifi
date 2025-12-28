@@ -27,6 +27,43 @@ This project aims to integrate Traefik with UniFi, allowing for routes populated
 - `FULL_SYNC_INTERVAL`: Trigger a full sync every N runs. Defaults to 5.
 - `IGNORE_SSL_WARNINGS`: Set to "true" to ignore SSL warnings. Defaults to "false".
 
+### Docker Label Filtering (Optional):
+
+Filter which containers get DNS entries by checking Docker container labels. This is useful when you only want certain containers to have UniFi DNS records (similar to how [cloudflare-companion](https://github.com/tiredofit/docker-traefik-cloudflare-companion) works).
+
+- `DOCKER_FILTER_LABEL`: The Docker label name to check (e.g., `traefik.unifi-dns`).
+- `DOCKER_FILTER_VALUE`: The required label value (e.g., `true`). If not set, any value is accepted.
+
+**Note:** When using Docker label filtering, you must mount the Docker socket:
+```yaml
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock
+```
+
+#### Example: Only create DNS for containers with `traefik.unifi-dns=true`
+
+Container labels:
+```yaml
+# This container WILL get UniFi DNS
+labels:
+  - traefik.enable=true
+  - traefik.http.routers.myapp.rule=Host(`myapp.example.com`)
+  - traefik.unifi-dns=true  # ← This label triggers UniFi DNS creation
+
+# This container will NOT get UniFi DNS (no traefik.unifi-dns label)
+labels:
+  - traefik.enable=true
+  - traefik.http.routers.public.rule=Host(`public.example.com`)
+  - traefik.constraint=proxy-public  # ← Only for Cloudflare, not UniFi
+```
+
+traefik-to-unifi configuration:
+```yaml
+environment:
+  - DOCKER_FILTER_LABEL=traefik.unifi-dns
+  - DOCKER_FILTER_VALUE=true
+```
+
 ## Usage
 
 ### 1. Using a published image

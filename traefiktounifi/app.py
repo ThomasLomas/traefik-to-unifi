@@ -5,6 +5,7 @@ import logging
 import os
 import re
 
+import docker
 import requests
 import urllib3
 
@@ -37,6 +38,27 @@ class TraefikToUnifi:
         )
         self.dns_record_type = os.environ.get("DNS_RECORD_TYPE", "A")
         self.full_sync_interval = int(os.environ.get("FULL_SYNC_INTERVAL", "5"))
+
+        # Docker label filtering (similar to cloudflare-companion)
+        # When set, only containers with matching labels will have DNS entries created
+        self.docker_filter_label = os.environ.get("DOCKER_FILTER_LABEL")
+        self.docker_filter_value = os.environ.get("DOCKER_FILTER_VALUE")
+        self.docker_client = None
+
+        if self.docker_filter_label:
+            logging.info(
+                f"Docker label filtering enabled: {self.docker_filter_label}={self.docker_filter_value or '*'}"
+            )
+            try:
+                self.docker_client = docker.from_env()
+                logging.info("Docker client initialized successfully.")
+            except docker.errors.DockerException as e:
+                logging.error(f"Failed to initialize Docker client: {e}")
+                logging.warning(
+                    "Docker label filtering will be disabled. "
+                    "Ensure Docker socket is mounted at /var/run/docker.sock"
+                )
+                self.docker_filter_label = None
 
         if self.ignore_ssl_warnings:
             # we show our own warning on startup, no warning on each request required
@@ -76,19 +98,80 @@ class TraefikToUnifi:
         logging.debug(f"TRAEFIK_API_URL={self.traefik_api_url}")
         logging.debug(f"FULL_SYNC_INTERVAL={self.full_sync_interval}")
 
+    def get_docker_hostnames_with_label(self):
+        """
+        Query Docker for containers with the specified label and extract their hostnames.
+        Returns a set of hostnames that should be included in DNS.
+        """
+        if not self.docker_client or not self.docker_filter_label:
+            return None  # No filtering, include all
+
+        allowed_hostnames = set()
+
+        try:
+            containers = self.docker_client.containers.list()
+            logging.debug(f"Found {len(containers)} running containers.")
+
+            for container in containers:
+                labels = container.labels
+                label_value = labels.get(self.docker_filter_label)
+
+                # Check if container has the filter label
+                if label_value is None:
+                    continue
+
+                # If a specific value is required, check it matches
+                if self.docker_filter_value and label_value != self.docker_filter_value:
+                    continue
+
+                logging.debug(
+                    f"Container {container.name} has matching label "
+                    f"{self.docker_filter_label}={label_value}"
+                )
+
+                # Extract hostnames from Traefik router labels
+                for label_name, label_val in labels.items():
+                    # Match traefik.http.routers.*.rule labels containing Host()
+                    if (
+                        label_name.startswith("traefik.http.routers.")
+                        and label_name.endswith(".rule")
+                        and "Host(" in str(label_val)
+                    ):
+                        # Extract hostname from Host(`hostname`) pattern
+                        match = re.search(r"Host\(`([^`]+)`\)", str(label_val))
+                        if match:
+                            hostname = match.group(1)
+                            allowed_hostnames.add(hostname)
+                            logging.debug(
+                                f"Found hostname {hostname} in container {container.name}"
+                            )
+
+        except docker.errors.APIError as e:
+            logging.error(f"Docker API error: {e}")
+            return None  # On error, fall back to no filtering
+
+        logging.info(
+            f"Docker label filter found {len(allowed_hostnames)} allowed hostnames."
+        )
+        return allowed_hostnames
+
     def sync(self):
         """
         Synchronizes Traefik hostnames with Unifi static DNS entries.
         - Fetches routers from Traefik API
         - Extracts hostnames from router rules
+        - Filters by Docker labels if configured
         - Compares them with existing Unifi static DNS entries
         - Adds missing hosts or updates outdated ones
         """
 
         logging.info("Starting synchronization...")
 
+        # Get allowed hostnames from Docker labels (if filtering is enabled)
+        allowed_hostnames = self.get_docker_hostnames_with_label()
+
         # Request routers from Traefik API
-        traefik_domains = self.fetch_traefik_domains()
+        traefik_domains = self.fetch_traefik_domains(allowed_hostnames)
 
         if not traefik_domains:
             logging.warning("No hostnames found in Traefik routers.")
@@ -247,8 +330,15 @@ class TraefikToUnifi:
 
         logging.info("Synchronization completed.")
 
-    def fetch_traefik_domains(self):
-        """Fetches and returns hostnames from Traefik routers."""
+    def fetch_traefik_domains(self, allowed_hostnames=None):
+        """
+        Fetches and returns hostnames from Traefik routers.
+
+        Args:
+            allowed_hostnames: Optional set of hostnames to filter by.
+                              If None, all hostnames are returned.
+                              If a set, only hostnames in the set are returned.
+        """
 
         logging.debug("Extracting hostnames from Traefik...")
 
@@ -278,8 +368,19 @@ class TraefikToUnifi:
                     continue
 
                 dns_name = match.group(1)
-                logging.debug(f"Extracted hostname from Traefik: {dns_name}")
 
+                # Apply Docker label filter if configured
+                if allowed_hostnames is not None:
+                    if dns_name not in allowed_hostnames:
+                        logging.debug(
+                            f"Skipping hostname {dns_name} - not in allowed list from Docker labels."
+                        )
+                        continue
+                    logging.debug(
+                        f"Including hostname {dns_name} - matches Docker label filter."
+                    )
+
+                logging.debug(f"Extracted hostname from Traefik: {dns_name}")
                 traefik_domains.append(dns_name)
 
         return traefik_domains
