@@ -349,11 +349,14 @@ class TraefikToUnifi:
         try:
             from datetime import datetime, timezone
 
+            # Deduplicate hostnames (multiple routers can have same hostname)
+            unique_hostnames = list(dict.fromkeys(hostnames))
+
             output_data = {
                 "last_updated": datetime.now(timezone.utc).isoformat(),
                 "traefik_ip": self.traefik_ip,
                 "dns_record_type": self.dns_record_type,
-                "total_entries": len(hostnames),
+                "total_entries": len(unique_hostnames),
                 "entries": sorted(
                     [
                         {
@@ -361,7 +364,7 @@ class TraefikToUnifi:
                             "target": self.traefik_ip,
                             "type": self.dns_record_type,
                         }
-                        for hostname in hostnames
+                        for hostname in unique_hostnames
                     ],
                     key=lambda x: x["hostname"],
                 ),
@@ -371,7 +374,7 @@ class TraefikToUnifi:
                 json.dump(output_data, f, indent=2)
 
             logging.info(
-                f"Wrote {len(hostnames)} DNS entries to {self.output_file}"
+                f"Wrote {len(unique_hostnames)} DNS entries to {self.output_file}"
             )
         except Exception as e:
             logging.error(f"Failed to write DNS entries to file: {e}")
