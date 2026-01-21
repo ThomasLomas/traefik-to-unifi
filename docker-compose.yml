@@ -3,5 +3,41 @@ services:
     build: .
     container_name: traefik-to-unifi
     restart: unless-stopped
-    env_file:
-      - .env
+    # Runs as non-root user defined in the Dockerfile (e.g., "appuser") by default.
+    # If you enable Docker label filtering with DOCKER_FILTER_LABEL and mount the Docker socket,
+    # ensure that this user has permission to access /var/run/docker.sock (for example by adding
+    # it to the "docker" group or using a Docker socket proxy) instead of running the container as root.
+    volumes:
+      # Docker socket for label filtering (required if using DOCKER_FILTER_LABEL)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Persistent storage for DNS entries JSON file
+      - ./data:/data
+    environment:
+      # === Required ===
+      - TRAEFIK_API_URL=http://traefik:8080/api/
+      - TRAEFIK_IP=10.0.10.50
+      - UNIFI_URL=https://192.168.1.1/
+      # Authentication: Use API key (recommended) OR username/password
+      - UNIFI_API_KEY=${UNIFI_API_KEY}
+      # - UNIFI_USERNAME=${UNIFI_USERNAME}
+      # - UNIFI_PASSWORD=${UNIFI_PASSWORD}
+
+      # === Optional ===
+      - LOG_LEVEL=INFO
+      - DNS_RECORD_TYPE=A
+      - IGNORE_SSL_WARNINGS=true
+
+      # === Docker Label Filtering ===
+      # Only sync containers that have this label set to this value
+      - DOCKER_FILTER_LABEL=traefik.unifi-dns
+      - DOCKER_FILTER_VALUE=true
+
+      # === DNS Output File ===
+      # Write synced entries to JSON file for auditing
+      - DNS_OUTPUT_FILE=/data/dns-entries.json
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
