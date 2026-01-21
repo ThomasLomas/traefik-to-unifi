@@ -3,8 +3,10 @@ services:
     build: .
     container_name: traefik-to-unifi
     restart: unless-stopped
-    # Run as root to access Docker socket (required for label filtering)
-    user: "0:0"
+    # Runs as non-root user defined in the Dockerfile (e.g., "appuser") by default.
+    # If you enable Docker label filtering with DOCKER_FILTER_LABEL and mount the Docker socket,
+    # ensure that this user has permission to access /var/run/docker.sock (for example by adding
+    # it to the "docker" group or using a Docker socket proxy) instead of running the container as root.
     volumes:
       # Docker socket for label filtering (required if using DOCKER_FILTER_LABEL)
       - /var/run/docker.sock:/var/run/docker.sock:ro
